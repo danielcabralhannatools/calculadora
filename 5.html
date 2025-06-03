@@ -1,0 +1,868 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <title>Hanna Tools – Calculadora de Usinagem</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; background: #f9f9f9; }
+    .container { width: 95%; max-width: 900px; margin: auto; margin-bottom: 24px; }
+    label { font-weight: bold; font-size: 16px; display: block; margin-bottom: 6px; }
+    input, select { width: 100%; padding: 10px; font-size: 14px; border: 1px solid #ccc; border-radius: 5px; }
+    .row { display: flex; flex-wrap: wrap; gap: 12px; }
+    .col { flex: 1; min-width: 120px; }
+    table { border-collapse: collapse; width: 100%; background: white; margin-bottom: 20px; }
+    th, td { padding: 10px; border: 1px solid #ccc; text-align: left; }
+    th { background: #f0f0f0; }
+    .iso { color: white; font-weight: bold; text-align: center; }
+
+    /* ====== FADE IN/OUT <tr> ====== */
+    #tabelaMateriais tbody tr {
+      transition: opacity 0.25s ease;
+      opacity: 1;
+    }
+    #tabelaMateriais tbody tr.escondida {
+      opacity: 0;
+    }
+  </style>
+
+  <!-- ======== LEITURA DO JSON AQUI ABAIXO ======== -->
+<script>
+  fetch("https://raw.githubusercontent.com/danielcabralhannatools/calculadora/main/tabela.json")
+    .then(response => {
+      if (!response.ok) {
+        throw new Error("Erro ao carregar o JSON externo.");
+      }
+      return response.json();
+    })
+    .then(data => {
+      console.log("JSON carregado com sucesso:", data);
+      usarDadosJSON(data); // substitua pelo nome da função que processa os dados no seu código
+    })
+    .catch(error => {
+      console.error("Erro no carregamento do JSON:", error);
+    });
+</script>
+
+  <!-- ======== FIM JSON ======== -->
+</head>
+<body>
+  <!-- ======== LOGO HANNA TOOLS ======== -->
+  <div class="container" style="text-align: center;">
+    <img src="http://www.hannatools.net/calculadora/logo_hanna_tools.png"
+         alt="Logo Hanna Tools"
+         style="max-width: 300px; height: auto;">
+  </div>
+
+  <!-- ======== TABELA DE MATERIAIS  ======== -->
+  <div class="container">
+    <table id="tabelaMateriais">
+      <thead>
+        <tr>
+          <th>Classe ISO</th>
+          <th>Descrição</th>
+          <th>Composição Química (Exemplo)</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr data-material="P1">
+          <td class="iso" style="background:#0070c0">P</td>
+          <td>Aço carbono</td>
+          <td>C: 0,45% / Mn: 0,75%</td>
+        </tr>
+        <tr data-material="P2">
+          <td class="iso" style="background:#0070c0">P</td>
+          <td>Aço baixa liga</td>
+          <td>C: 0,40% / Cr: 1,0%</td>
+        </tr>
+        <tr data-material="P3">
+          <td class="iso" style="background:#0070c0">P</td>
+          <td>Aço alta liga</td>
+          <td>C: 0,38% / Cr: 1,5% / Mo: 0,3%</td>
+        </tr>
+        <tr data-material="H1">
+          <td class="iso" style="background:#808080">H</td>
+          <td>Aço temperado</td>
+          <td>50–62 HRC</td>
+        </tr>
+        <tr data-material="K1">
+          <td class="iso" style="background:#ff0000">K</td>
+          <td>Ferro fundido cinzento</td>
+          <td>Fe: &gt;95% / C: 3%</td>
+        </tr>
+        <tr data-material="K2">
+          <td class="iso" style="background:#ff0000">K</td>
+          <td>Ferro fundido nodular</td>
+          <td>Fe: &gt;95% / C: 3% / Mg: 0,05%</td>
+        </tr>
+        <tr data-material="K3">
+          <td class="iso" style="background:#ff0000">K</td>
+          <td>Ferro fundido vermicular</td>
+          <td>Fe: &gt;95% / C: 3% / Si: 2%</td>
+        </tr>
+        <tr data-material="M1">
+          <td class="iso" style="background:#ffc000; color:black">M</td>
+          <td>Aço inoxidável</td>
+          <td>Cr: 18% / Ni: 8%</td>
+        </tr>
+        <tr data-material="S1">
+          <td class="iso" style="background:#ff9900; color:black">S</td>
+          <td>Inconel</td>
+          <td>Ni: &gt;50% / Cr: 15% / Fe: 8%</td>
+        </tr>
+        <tr data-material="N1">
+          <td class="iso" style="background:#00b050">N</td>
+          <td>Alumínio baixo silício</td>
+          <td>Al: &gt;96% / Si: &lt;3%</td>
+        </tr>
+        <tr data-material="N2">
+          <td class="iso" style="background:#00b050">N</td>
+          <td>Alumínio alto silício</td>
+          <td>Al: 85–90% / Si: 8–12%</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ======== SELECT DE MATERIAIS ======== -->
+  <div class="container">
+    <label for="material">Material da Peça:</label>
+    <select id="material">
+      <option value="">Selecione o Material</option>
+      <option value="P1">Aço carbono</option>
+      <option value="P2">Aço baixa liga</option>
+      <option value="P3">Aço alta liga</option>
+      <option value="H1">Aço temperado</option>
+      <option value="K1">Ferro fundido cinzento</option>
+      <option value="K2">Ferro fundido nodular</option>
+      <option value="K3">Ferro fundido vermicular</option>
+      <option value="M1">Aço inoxidável</option>
+      <option value="S1">Inconel</option>
+      <option value="N1">Alumínio baixo silício</option>
+      <option value="N2">Alumínio alto silício</option>
+    </select>
+  </div>
+
+  <!-- ======== CONVERSOR DE DUREZA ======== -->
+  <div class="container">
+    <label>Dureza do Material:</label>
+    <div class="row">
+      <div class="col">
+        <label for="hrc">HRC (Rockwell)</label>
+        <input id="hrc" type="number" min="1" max="70" step="1">
+      </div>
+      <div class="col">
+        <label for="hb">HB (Brinell)</label>
+        <input id="hb" type="text" readonly style="background: #f0f0f0;">
+      </div>
+      <div class="col">
+        <label for="hv">HV (Vickers)</label>
+        <input id="hv" type="text" readonly style="background: #f0f0f0;">
+      </div>
+    </div>
+  </div>
+
+  <!-- ======== SCRIPT: FILTRAR TABELA E CONVERTER DUREZA ======== -->
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      const selectMaterial = document.getElementById('material');
+      const linhas = document.querySelectorAll('#tabelaMateriais tbody tr');
+
+      // ====== DADOS DE DUREZA (HRC) PARA CADA MATERIAL ======
+      const bancoDurezas = {
+        P1: 30, P2: 20, P3: 25,
+        H1: 46,
+        K1: 20, K2: 22, K3: 25,
+        M1: 18,
+        S1: 28,
+        N1: 25, N2: 25
+      };
+
+      // ====== FUNÇÃO QUE ATUALIZA HRC --> HB, HV ======
+      function atualizarDureza() {
+        const mat = selectMaterial.value;
+        const hrcVal = bancoDurezas[mat] || '';
+        document.getElementById('hrc').value = hrcVal;
+        converterHB();
+      }
+      function converterHB() {
+        const hrc = parseFloat(document.getElementById('hrc').value);
+        if (!isNaN(hrc)) {
+          const hb = Math.round(30.1 + 2.44 * hrc + 0.019 * hrc * hrc);
+          document.getElementById('hb').value = hb;
+          document.getElementById('hv').value = Math.round(1.18 * hb);
+        } else {
+          document.getElementById('hb').value = '';
+          document.getElementById('hv').value = '';
+        }
+      }
+
+      // ← Vincula eventos para conversão de dureza
+      selectMaterial.addEventListener('change', atualizarDureza);
+      document.getElementById('hrc').addEventListener('input', converterHB);
+
+      // ====== FUNÇÕES PARA FADE IN / FADE OUT DOS <tr> ======
+      function esconderLinha(tr) {
+        tr.classList.add('escondida');
+        tr.addEventListener('transitionend', function handler() {
+          tr.style.display = 'none';
+          tr.removeEventListener('transitionend', handler);
+        });
+      }
+      function mostrarLinha(tr) {
+        tr.style.display = 'table-row';
+        tr.classList.add('escondida');
+        requestAnimationFrame(() => {
+          tr.classList.remove('escondida');
+        });
+      }
+
+      // ====== EVENTO AO MUDAR SELECT DE MATERIAL ======
+      selectMaterial.addEventListener('change', () => {
+        const valor = selectMaterial.value;
+        linhas.forEach(tr => {
+          if (valor === '' || tr.dataset.material === valor) {
+            if (tr.style.display === 'none') {
+              mostrarLinha(tr);
+            }
+          } else {
+            if (tr.style.display !== 'none') {
+              esconderLinha(tr);
+            }
+          }
+        });
+      });
+
+      // ====== NA CARGA INICIAL, EXIBIR TODAS AS LINHAS ======
+      linhas.forEach(tr => {
+        tr.style.display = 'table-row';
+        tr.classList.remove('escondida');
+      });
+      document.getElementById('hrc').value = '';
+      document.getElementById('hb').value = '';
+      document.getElementById('hv').value = '';
+    });
+  </script>
+
+  <div class="container">
+    <label for="condicaoRefrigeracao">Condição de Refrigeração:</label>
+    <select id="condicaoRefrigeracao">
+      <option value="satisfatoria">Satisfatória (20–50 BAR)</option>
+      <option value="otima">Ótima (&gt;50 BAR)</option>
+      <option value="deficiente">Deficiente (&lt;20 BAR)</option>
+    </select>
+  </div>
+
+  <div class="container">
+    <label for="condicaoFixacao">Condição de Fixação:</label>
+    <select id="condicaoFixacao">
+      <option value="satisfatoria">Satisfatória (0,010–0,005 mm)</option>
+      <option value="otima">Ótima (&lt;0,005 mm)</option>
+      <option value="deficiente">Deficiente (&gt;0,010 mm)</option>
+    </select>
+  </div>
+
+  <div class="container">
+    <div class="row">
+      <div class="col">
+        <label for="diametro">Diâmetro do Furo (mm)</label>
+        <input type="number" id="diametro" placeholder="Ex: 45.000" step="0.001">
+      </div>
+      <div class="col">
+        <label for="comprimento">Comprimento do Furo (mm)</label>
+        <input type="number" id="comprimento" placeholder="Ex: 100.00" step="0.01">
+      </div>
+      <div class="col">
+        <label for="tolerancia">Tolerância (µm)</label>
+        <select id="tolerancia">
+          <option value="">Selecione</option>
+          <option value="H5">H5</option>
+          <option value="H6">H6</option>
+          <option value="H7">H7</option>
+          <option value="H8">H8</option>
+          <option value="H9">H9</option>
+          <option value="F7">F7</option>
+          <option value="F8">F8</option>
+          <option value="G6">G6</option>
+          <option value="G7">G7</option>
+          <option value="JS6">JS6</option>
+          <option value="JS7">JS7</option>
+          <option value="N5">N5</option>
+          <option value="Personalizada">Personalizada</option>
+        </select>
+        <p id="resultadoTolerancia"></p>
+        <div id="personalizadaBox" class="row" style="display: none;">
+          <div class="col">
+            <label for="tolInf">Tolerância Inferior (µm)</label>
+            <input id="tolInf" type="number" value="0" step="1">
+          </div>
+          <div class="col">
+            <label for="tolSup">Tolerância Superior (µm)</label>
+            <input id="tolSup" type="number" value="0" step="1">
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="container">
+    <label for="ferramenta">Tipo de Ferramenta:</label>
+    <select id="ferramenta">
+      <option value="">Selecione</option>
+      <option value="pattern">Alargador de lâmina Regulável – HANNA PATTERN</option>
+      <option value="gemini">Alargador de lâminas Reguláveis – HANNA GEMINI</option>
+      <option value="solido">Alargador Sólido Multicorte</option>
+      <option value="hannahr">Alargador modular de Alta Performance – HANNA HR</option>
+      <option value="sugestao">Receber Sugestão de Ferramenta</option>
+    </select>
+  </div>
+
+  <!-- ====== CAMPOS ADICIONAIS: Material de Corte, Cobertura, Número de Facas, Avanço por Faca ====== -->
+  <div class="container">
+    <div class="row" style="gap: 12px; align-items: flex-end;">
+      <!-- Material de Corte -->
+      <div class="col" style="min-width: 140px;">
+        <label for="materialCorte">Material de Corte:</label>
+        <select id="materialCorte">
+          <option value="">Selecione…</option>
+          <option value="Metal Duro">Metal Duro</option>
+          <option value="Cermet">Cermet</option>
+          <option value="PCD">PCD</option>
+          <option value="PCBN">PCBN</option>
+        </select>
+      </div>
+      <!-- Cobertura -->
+      <div class="col" style="min-width: 100px;">
+        <label for="cobertura">Cobertura:</label>
+        <select id="cobertura">
+          <option value="">Selecione…</option>
+          <option value="Sim">Sim</option>
+          <option value="Não">Não</option>
+        </select>
+      </div>
+      <!-- Número de Facas (Z) -->
+      <div class="col" style="min-width: 100px;">
+        <label for="numFacas">Número de Facas (Z):</label>
+        <input id="numFacas" type="number" min="1" step="1" placeholder="—" />
+      </div>
+      <!-- Avanço por Faca (Fz) -->
+      <div class="col" style="min-width: 120px;">
+        <label for="fz">Avanço por Faca (mm/dente):</label>
+        <input id="fz" type="number" step="0.01" placeholder="—" />
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== BOTÕES “Calcular”, “Nova Consulta” e “Exportar PDF” ===== -->
+  <div class="container" style="text-align: left; margin-top: 16px;">
+    <button id="btnCalcular"
+            style="background-color: #c00; color: #fff; border: none; border-radius: 8px; padding: 10px 20px; font-size: 16px; margin-right: 8px;">
+      Calcular
+    </button>
+    <button id="btnNovaConsulta"
+            style="background-color: #c00; color: #fff; border: none; border-radius: 8px; padding: 10px 20px; font-size: 16px; margin-right: 8px;">
+      Nova Consulta
+    </button>
+    <button id="btnExportarPDF"
+            style="background-color: #c00; color: #fff; border: none; border-radius: 8px; padding: 10px 20px; font-size: 16px;">
+      Exportar PDF
+    </button>
+  </div>
+  <!-- ======== ÁREA DE RESULTADO (inicialmente oculta) ======== -->
+  <div id="resultadoCalculo" class="container" style="
+       display: none;
+       background-color: #d9f2d9;
+       border: 1px solid #73c973;
+       padding: 16px;
+       margin-top: 16px;
+       border-radius: 5px;
+       color: #033a03;
+       font-size: 15px;
+     ">
+    <!-- O JavaScript vai preencher este conteúdo -->
+  </div>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", function() {
+      // Obtém referências aos campos
+      const selMaterial       = document.getElementById("material");
+      const selDiam           = document.getElementById("diametro");
+      const selComprimento    = document.getElementById("comprimento");
+      const selTolerancia     = document.getElementById("tolerancia");
+      const selTolSup         = document.getElementById("tolSup");
+      const selMaterialCorte  = document.getElementById("materialCorte");
+      const selCobertura      = document.getElementById("cobertura");
+      const selFerramenta     = document.getElementById("ferramenta");
+      const inputNumFacas     = document.getElementById("numFacas");
+      const inputFz           = document.getElementById("fz");
+
+      const btnCalcular       = document.getElementById("btnCalcular");
+      const btnNovaConsulta   = document.getElementById("btnNovaConsulta");
+      const btnExportarPDF    = document.getElementById("btnExportarPDF");
+
+      // Mapa “nível Hx → tolSup (µm)”
+      const mapaTolerancias = {
+        H5: 8, H6: 11, H7: 14, H8: 18, H9: 25,
+        H10: 40, H11: 60, H12: 80,
+        F7: 11, F8: 13, G6: 6, G7: 8, JS6: 9, JS7: 11, N5: 17
+      };
+
+      // Ao mudar “tolerância”, exibe/oculta campos Personalizada e preenche tolSup
+      selTolerancia.addEventListener("change", () => {
+        const nivel = selTolerancia.value;
+        const personalizadaBox = document.getElementById("personalizadaBox");
+        if (nivel === "Personalizada") {
+          personalizadaBox.style.display = "flex";
+        } else {
+          personalizadaBox.style.display = "none";
+          selTolSup.value = mapaTolerancias[nivel] || "";
+        }
+        autoPreencherSelects();  // Atualiza material de corte / cobertura / sugestão
+      });
+
+      // Valida se todos os campos obrigatórios têm valor
+      function camposValidosParaCalculo() {
+        const mat   = selMaterial.value;
+        const diam  = getDiamValor();
+        const compr = selComprimento.value;
+        const tolSel= selTolerancia.value;
+        const tolSup= selTolSup.value;
+        const matC  = selMaterialCorte.value;
+        const cob   = selCobertura.value;
+        const tipoF = selFerramenta.value;
+        // Se faltar QUALQUER dado obrigatório, retorna false
+        return (
+          mat && diam !== null && compr &&
+          ((tolSel !== "Personalizada") || tolSup) &&
+          matC && cob && tipoF
+        );
+      }
+
+      // Converte tolSup (string) em inteiro, retornando null se inválido
+      function getToleranciaValor() {
+        const val = parseInt(selTolSup.value, 10);
+        return isNaN(val) ? null : val;
+      }
+      // Converte diam (string) em número (3 casas decimais), retornando null se inválido
+      function getDiamValor() {
+        const raw = selDiam.value.replace(",", ".");
+        const num = parseFloat(raw);
+        if (isNaN(num)) return null;
+        return Math.round(num * 1000) / 1000;
+      }
+
+      // Retorna a “Ferramenta_sugerida” (primeiro item) para a combinação dada, ou null
+      function obterPrimeiraFerramenta(iso, diam, tol, matCorte, cob) {
+        const candidatos = window.tabelaParams.filter(item => {
+          return (
+            item.Codigo_ISO === iso &&
+            diam >= item["Diametro_min (mm)"] &&
+            diam <= item["Diametro_max (mm)"] &&
+            tol >= item["Tolerancia_min (µm)"] &&
+            tol <= item["Tolerancia_max (µm)"] &&
+            item.Material_de_Corte === matCorte &&
+            item.Cobertura === cob
+          );
+        });
+        if (candidatos.length === 0) return null;
+        return candidatos[0].Ferramenta_sugerida.split(";")[0].trim();
+      }
+
+      // Atualiza números Z e fz conforme a seleção atual, SEM resetar dados obrigatórios
+      function atualizaZefz() {
+        const iso      = selMaterial.value;
+        const diam     = getDiamValor();
+        const tol      = getToleranciaValor();
+        const matCorte = selMaterialCorte.value;
+        const cob      = selCobertura.value;
+        const tipoF    = selFerramenta.value;
+
+        // Se qualquer um dos dados obrigatórios estiver faltando, limpar e sair
+        if (!iso || diam === null || tol === null || !matCorte || !cob || !tipoF) {
+          inputNumFacas.value = "";
+          inputFz.value       = "";
+          return;
+        }
+
+        // Busca a “linha” (objeto JSON) que corresponde ao conjunto de parâmetros
+        const linha = window.tabelaParams.find(item => {
+          return (
+            item.Codigo_ISO === iso &&
+            diam >= item["Diametro_min (mm)"] &&
+            diam <= item["Diametro_max (mm)"] &&
+            tol >= item["Tolerancia_min (µm)"] &&
+            tol <= item["Tolerancia_max (µm)"] &&
+            item.Material_de_Corte === matCorte &&
+            item.Cobertura === cob
+          );
+        });
+        // Se não encontrar nada, limpa e sai
+        if (!linha) {
+          inputNumFacas.value = "";
+          inputFz.value       = "";
+          return;
+        }
+
+        // Extrai Z e fz conforme “tipoF”
+        let Z = null, fzVal = null;
+        switch (tipoF) {
+          case "pattern":
+            Z      = linha.Z_Pattern;
+            fzVal  = linha["fz_Pattern (mm/dente)"];
+            break;
+          case "gemini":
+            Z      = linha.Z_Gemini;
+            fzVal  = linha["fz_Gemini (mm/dente)"];
+            break;
+          case "solido":
+            Z      = linha.Z_SolidoMulticorte;
+            fzVal  = linha["fz_SolidoMulticorte (mm/dente)"];
+            break;
+          case "hannahr":
+            Z      = linha.Z_HannaHR;
+            fzVal  = linha["fz_HannaHR (mm/dente)"];
+            break;
+          case "sugestao":
+            // Se o usuário escolheu “Receber Sugestão”, limpamos e retornamos
+            inputNumFacas.value = "";
+            inputFz.value       = "";
+            return;
+          default:
+            inputNumFacas.value = "";
+            inputFz.value       = "";
+            return;
+        }
+
+        // Atribui ao input, caso Z/fz não sejam nulos
+        inputNumFacas.value = Z !== null && Z !== undefined ? Z : "";
+        inputFz.value       = fzVal !== null && fzVal !== undefined
+                              ? fzVal.toFixed(3)
+                              : "";
+      }
+
+      // Preenche automaticamente “Material de Corte”, “Cobertura” e “Ferramenta” sugerida
+      function autoPreencherSelects() {
+        const iso  = selMaterial.value;
+        const diam = getDiamValor();
+        const tol  = getToleranciaValor();
+        if (!iso || diam === null || tol === null) return;
+
+        const candidatos = window.tabelaParams.filter(item => {
+          return (
+            item.Codigo_ISO === iso &&
+            diam >= item["Diametro_min (mm)"] &&
+            diam <= item["Diametro_max (mm)"] &&
+            tol >= item["Tolerancia_min (µm)"] &&
+            tol <= item["Tolerancia_max (µm)"]
+          );
+        });
+        if (candidatos.length === 0) return;
+
+        const primeira = candidatos[0];
+        selMaterialCorte.value = primeira.Material_de_Corte;
+        selCobertura.value     = primeira.Cobertura;
+
+        const sugestao = obterPrimeiraFerramenta(
+          iso, diam, tol,
+          primeira.Material_de_Corte, primeira.Cobertura
+        );
+        if (sugestao) {
+          if (sugestao.includes("PATTERN"))        selFerramenta.value = "pattern";
+          else if (sugestao.includes("GEMINI"))     selFerramenta.value = "gemini";
+          else if (
+            sugestao.includes("Sólido Multicorte") ||
+            sugestao.includes("SolidoMulticorte")
+          ) selFerramenta.value = "solido";
+          else if (
+            sugestao.includes("Hanna HR") ||
+            sugestao.includes("HANNA HR")
+          ) selFerramenta.value = "hannahr";
+        }
+
+        // Agora que o “tipoF” foi ajustado, recalcula Z e fz
+        atualizaZefz();
+      }
+
+      // ====== LIGA OS LISTENERS ======
+      selMaterial.addEventListener("change",  autoPreencherSelects);
+      selDiam.addEventListener("input",       autoPreencherSelects);
+      selTolSup.addEventListener("input",     autoPreencherSelects);
+
+      selMaterialCorte.addEventListener("change", atualizaZefz);
+      selCobertura.addEventListener("change",     atualizaZefz);
+      // **Garante que, ao trocar de “tipo de ferramenta”, a função seja chamada**
+      selFerramenta.addEventListener("change",    atualizaZefz);
+
+      // Função para executar o cálculo final (com resultados em segundos para tempo de contato)
+      function realizarCalculo() {
+        if (!camposValidosParaCalculo()) {
+          alert("Preencha todos os dados antes de calcular.");
+          return;
+        }
+
+        const iso    = selMaterial.value;
+        const diam   = getDiamValor();
+        const compr  = parseFloat(selComprimento.value.replace(",", ".")) || 0;
+        const tol    = getToleranciaValor();
+        const matC   = selMaterialCorte.value;
+        const cob    = selCobertura.value;
+        let tipoF    = selFerramenta.value;
+
+        // Se o usuário escolher “Receber Sugestão de Ferramenta”, atribui a primeira disponível
+        if (tipoF === "sugestao") {
+          const sugestao = obterPrimeiraFerramenta(iso, diam, tol, matC, cob);
+          if (!sugestao) {
+            alert("Não foi possível sugerir uma ferramenta para estes parâmetros.");
+            return;
+          }
+          if (sugestao.includes("PATTERN"))        tipoF = "pattern";
+          else if (sugestao.includes("GEMINI"))     tipoF = "gemini";
+          else if (
+            sugestao.includes("Sólido Multicorte") ||
+            sugestao.includes("SolidoMulticorte")
+          ) tipoF = "solido";
+          else if (
+            sugestao.includes("Hanna HR") ||
+            sugestao.includes("HANNA HR")
+          ) tipoF = "hannahr";
+          selFerramenta.value = tipoF;
+        }
+
+        // Busca a linha exata na tabelaParams
+        const linha = window.tabelaParams.find(item => {
+          return (
+            item.Codigo_ISO === iso &&
+            diam >= item["Diametro_min (mm)"] &&
+            diam <= item["Diametro_max (mm)"] &&
+            tol >= item["Tolerancia_min (µm)"] &&
+            tol <= item["Tolerancia_max (µm)"] &&
+            item.Material_de_Corte === matC &&
+            item.Cobertura === cob
+          );
+        });
+        if (!linha) {
+          alert("Não foi encontrada correspondência na tabela de parâmetros.");
+          return;
+        }
+
+        const VC = parseFloat(linha["VC_sugerido (m/min)"]);
+        if (!VC) {
+          alert("VC não disponível para esta combinação.");
+          return;
+        }
+
+        let Z = 0, fz = 0;
+        switch (tipoF) {
+          case "pattern":
+            Z  = linha.Z_Pattern;
+            fz = linha["fz_Pattern (mm/dente)"];
+            break;
+          case "gemini":
+            Z  = linha.Z_Gemini;
+            fz = linha["fz_Gemini (mm/dente)"];
+            break;
+          case "solido":
+            Z  = linha.Z_SolidoMulticorte;
+            fz = linha["fz_SolidoMulticorte (mm/dente)"];
+            break;
+          case "hannahr":
+            Z  = linha.Z_HannaHR;
+            fz = linha["fz_HannaHR (mm/dente)"];
+            break;
+          default:
+            alert("Tipo de ferramenta inválido.");
+            return;
+        }
+        if (!Z || !fz) {
+          alert("Z ou fz não disponíveis para esta ferramenta.");
+          return;
+        }
+
+        // ====== CÁLCULOS ======
+        const RPM        = (VC * 1000) / (Math.PI * diam);
+        const avPorRot   = fz * Z;
+        const avLinear   = avPorRot * RPM;
+        const tempoContatoMin = avLinear > 0 ? (compr / avLinear) : 0;
+        const tempoContatoSeg = tempoContatoMin * 60;
+
+        // Mostra resultados na área de resultado
+        const container = document.getElementById("resultadoCalculo");
+        container.innerHTML = `
+          <h3>Resultados do Cálculo</h3>
+          <p><strong>RPM:</strong> ${RPM.toFixed(0)}</p>
+          <p><strong>Avanço por rotação:</strong> ${avPorRot.toFixed(4)} mm/rot</p>
+          <p><strong>Avanço Linear:</strong> ${avLinear.toFixed(2)} mm/min</p>
+          <p><strong>Tempo estimado de contato:</strong> ${tempoContatoSeg.toFixed(2)} s</p>
+        `;
+        container.style.display = "block";
+        container.scrollIntoView({ behavior: "smooth" });
+      }
+
+      btnCalcular.addEventListener("click",       realizarCalculo);
+      btnNovaConsulta.addEventListener("click",   () => location.reload());
+      btnExportarPDF.addEventListener("click",    () => alert("Exportar PDF clicado."));
+    });
+
+    // ======= TABELA DE TOLERÂNCIAS DETALHADA (em milésimos) =======
+    const bancoTolerancias = {
+      H5: [
+        {min:3,max:6, sup:8, inf:0},
+        {min:6,max:10, sup:9, inf:0},
+        {min:10,max:18, sup:10, inf:0},
+        {min:18,max:30, sup:12, inf:0},
+        {min:30,max:39, sup:14, inf:0},
+        {min:39,max:52, sup:15, inf:0},
+        {min:52,max:65, sup:16, inf:0},
+        {min:65,max:80, sup:18, inf:0},
+        {min:80,max:100, sup:20, inf:0},
+        {min:100,max:120, sup:22, inf:0},
+        {min:120,max:140, sup:25, inf:0},
+        {min:140,max:160, sup:29, inf:0},
+        {min:160,max:180, sup:34, inf:0},
+        {min:180,max:200, sup:40, inf:0}
+      ],
+      H6: [
+        {min:3,max:6, sup:8, inf:0},
+        {min:6,max:10, sup:9, inf:0},
+        {min:10,max:18, sup:11, inf:0},
+        {min:18,max:30, sup:13, inf:0},
+        {min:30,max:39, sup:15, inf:0},
+        {min:39,max:52, sup:17, inf:0},
+        {min:52,max:65, sup:19, inf:0},
+        {min:65,max:80, sup:22, inf:0},
+        {min:80,max:100, sup:25, inf:0},
+        {min:100,max:120, sup:29, inf:0},
+        {min:120,max:140, sup:32, inf:0},
+        {min:140,max:160, sup:36, inf:0},
+        {min:160,max:180, sup:40, inf:0},
+        {min:180,max:200, sup:45, inf:0}
+      ],
+      H7: [
+        {min:3,max:6, sup:15, inf:0},
+        {min:6,max:10, sup:18, inf:0},
+        {min:10,max:18, sup:21, inf:0},
+        {min:18,max:30, sup:25, inf:0},
+        {min:30,max:39, sup:30, inf:0},
+        {min:39,max:52, sup:35, inf:0},
+        {min:52,max:65, sup:40, inf:0},
+        {min:65,max:80, sup:45, inf:0},
+        {min:80,max:100, sup:50, inf:0},
+        {min:100,max:120, sup:56, inf:0},
+        {min:120,max:140, sup:63, inf:0},
+        {min:140,max:160, sup:71, inf:0},
+        {min:160,max:180, sup:80, inf:0},
+        {min:180,max:200, sup:90, inf:0}
+      ],
+      H8: [
+        {min:3,max:6, sup:22, inf:0},
+        {min:6,max:10, sup:27, inf:0},
+        {min:10,max:18, sup:33, inf:0},
+        {min:18,max:30, sup:39, inf:0},
+        {min:30,max:39, sup:46, inf:0},
+        {min:39,max:52, sup:54, inf:0},
+        {min:52,max:65, sup:63, inf:0},
+        {min:65,max:80, sup:72, inf:0},
+        {min:80,max:100, sup:81, inf:0},
+        {min:100,max:120, sup:90, inf:0},
+        {min:120,max:140, sup:100, inf:0},
+        {min:140,max:160, sup:110, inf:0},
+        {min:160,max:180, sup:121, inf:0},
+        {min:180,max:200, sup:132, inf:0}
+      ],
+      H9: [
+        {min:3,max:6, sup:36, inf:0},
+        {min:6,max:10, sup:43, inf:0},
+        {min:10,max:18, sup:52, inf:0},
+        {min:18,max:30, sup:62, inf:0},
+        {min:30,max:39, sup:74, inf:0},
+        {min:39,max:52, sup:87, inf:0},
+        {min:52,max:65, sup:100, inf:0},
+        {min:65,max:80, sup:115, inf:0},
+        {min:80,max:100, sup:132, inf:0},
+        {min:100,max:120, sup:151, inf:0},
+        {min:120,max:140, sup:171, inf:0},
+        {min:140,max:160, sup:193, inf:0},
+        {min:160,max:180, sup:216, inf:0},
+        {min:180,max:200, sup:240, inf:0}
+      ],
+      F7: [
+        {min:3,max:6, sup:13, inf:-7}, {min:6,max:10, sup:16, inf:-9}, {min:10,max:18, sup:19, inf:-11},
+        {min:18,max:30, sup:23, inf:-13}, {min:30,max:39, sup:28, inf:-16}, {min:39,max:52, sup:33, inf:-19},
+        {min:52,max:65, sup:38, inf:-22}, {min:65,max:80, sup:44, inf:-25}, {min:80,max:100, sup:50, inf:-28},
+        {min:100,max:120, sup:57, inf:-32}, {min:120,max:140, sup:64, inf:-36}, {min:140,max:160, sup:72, inf:-41},
+        {min:160,max:180, sup:80, inf:-46}, {min:180,max:200, sup:89, inf:-51}
+      ],
+      F8: [
+        {min:3,max:6, sup:23, inf:-9}, {min:6,max:10, sup:28, inf:-11}, {min:10,max:18, sup:33, inf:-13},
+        {min:18,max:30, sup:39, inf:-16}, {min:30,max:39, sup:46, inf:-19}, {min:39,max:52, sup:54, inf:-22},
+        {min:52,max:65, sup:63, inf:-25}, {min:65,max:80, sup:72, inf:-28}, {min:80,max:100, sup:82, inf:-32},
+        {min:100,max:120, sup:92, inf:-36}, {min:120,max:140, sup:103, inf:-41}, {min:140,max:160, sup:115, inf:-46},
+        {min:160,max:180, sup:127, inf:-52}, {min:180,max:200, sup:140, inf:-58}
+      ],
+      G6: [
+        {min:3,max:6, sup:4, inf:-8}, {min:6,max:10, sup:5, inf:-10}, {min:10,max:18, sup:6, inf:-13},
+        {min:18,max:30, sup:8, inf:-16}, {min:30,max:39, sup:10, inf:-20}, {min:39,max:52, sup:12, inf:-23},
+        {min:52,max:65, sup:14, inf:-26}, {min:65,max:80, sup:16, inf:-29}, {min:80,max:100, sup:19, inf:-33},
+        {min:100,max:120, sup:22, inf:-38}, {min:120,max:140, sup:26, inf:-44}, {min:140,max:160, sup:30, inf:-50},
+        {min:160,max:180, sup:34, inf:-56}, {min:180,max:200, sup:39, inf:-62}
+      ],
+      G7: [
+        {min:3,max:6, sup:9, inf:-6}, {min:6,max:10, sup:11, inf:-7}, {min:10,max:18, sup:13, inf:-8},
+        {min:18,max:30, sup:16, inf:-10}, {min:30,max:39, sup:20, inf:-12}, {min:39,max:52, sup:23, inf:-14},
+        {min:52,max:65, sup:26, inf:-16}, {min:65,max:80, sup:29, inf:-18}, {min:80,max:100, sup:33, inf:-21},
+        {min:100,max:120, sup:38, inf:-24}, {min:120,max:140, sup:43, inf:-27}, {min:140,max:160, sup:49, inf:-31},
+        {min:160,max:180, sup:55, inf:-35}, {min:180,max:200, sup:61, inf:-39}
+      ],
+      JS6: [
+        {min:3,max:6, sup:6, inf:-6}, {min:6,max:10, sup:7, inf:-7}, {min:10,max:18, sup:9, inf:-9},
+        {min:18,max:30, sup:11, inf:-11}, {min:30,max:39, sup:13, inf:-13}, {min:39,max:52, sup:16, inf:-16},
+        {min:52,max:65, sup:19, inf:-19}, {min:65,max:80, sup:22, inf:-22}, {min:80,max:100, sup:26, inf:-26},
+        {min:100,max:120, sup:30, inf:-30}, {min:120,max:140, sup:34, inf:-34}, {min:140,max:160, sup:38, inf:-38},
+        {min:160,max:180, sup:43, inf:-43}, {min:180,max:200, sup:48, inf:-48}
+      ],
+      JS7: [
+        {min:3,max:6, sup:8, inf:-8}, {min:6,max:10, sup:9, inf:-9}, {min:10,max:18, sup:11, inf:-11},
+        {min:18,max:30, sup:13, inf:-13}, {min:30,max:39, sup:16, inf:-16}, {min:39,max:52, sup:19, inf:-19},
+        {min:52,max:65, sup:22, inf:-22}, {min:65,max:80, sup:25, inf:-25}, {min:80,max:100, sup:29, inf:-29},
+        {min:100,max:120, sup:33, inf:-33}, {min:120,max:140, sup:37, inf:-37}, {min:140,max:160, sup:41, inf:-41},
+        {min:160,max:180, sup:46, inf:-46}, {min:180,max:200, sup:51, inf:-51}
+      ],
+      N5: [
+        {min:3,max:6, sup:5, inf:-3}, {min:6,max:10, sup:6, inf:-3}, {min:10,max:18, sup:7, inf:-4},
+        {min:18,max:30, sup:9, inf:-5}, {min:30,max:39, sup:11, inf:-6}, {min:39,max:52, sup:13, inf:-7},
+        {min:52,max:65, sup:15, inf:-8}, {min:65,max:80, sup:17, inf:-9}, {min:80,max:100, sup:19, inf:-10},
+        {min:100,max:120, sup:22, inf:-12}, {min:120,max:140, sup:25, inf:-14}, {min:140,max:160, sup:29, inf:-17},
+        {min:160,max:180, sup:33, inf:-20}, {min:180,max:200, sup:37, inf:-23}
+      ]
+    };
+
+    const diam = document.getElementById('diametro');
+    const tol = document.getElementById('tolerancia');
+    const res = document.getElementById('resultadoTolerancia');
+    const inf = document.getElementById('tolInf');
+    const sup = document.getElementById('tolSup');
+    const pers = document.getElementById('personalizadaBox');
+
+    function atualizarResultado() {
+      const d = parseFloat(diam.value);
+      const tVal = tol.value;
+      if (!d || !tVal) { res.innerText = 'Informe diâmetro e tolerância.'; return; }
+      if (tVal === 'Personalizada') {
+        res.innerText = `Limite Mín: ${(d + parseFloat(inf.value)/1000).toFixed(3)} mm | Máx: ${(d + parseFloat(sup.value)/1000).toFixed(3)} mm`;
+      } else if (bancoTolerancias[tVal]) {
+        const faixa = bancoTolerancias[tVal].find(f => d >= f.min && d < f.max);
+        res.innerText = faixa ? `Limite Mín: ${(d + faixa.inf/1000).toFixed(3)} mm | Máx: ${(d + faixa.sup/1000).toFixed(3)} mm` : 'Fora da faixa.';
+      } else {
+        res.innerText = 'Tolerância inválida.';
+      }
+    }
+    tol.addEventListener('change', () => {
+      pers.style.display = tol.value==='Personalizada'?'flex':'none';
+      atualizarResultado();
+    });
+    diam.addEventListener('input', atualizarResultado);
+    inf.addEventListener('input', atualizarResultado);
+    sup.addEventListener('input', atualizarResultado);
+  </script>
+
+</body>
+</html>
