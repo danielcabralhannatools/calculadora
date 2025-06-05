@@ -36,11 +36,19 @@
     })
     .then(data => {
       console.log("JSON carregado com sucesso:", data);
-      usarDadosJSON(data); // substitua pelo nome da função que processa os dados no seu código
+      // Guarda os dados carregados para uso nas demais funções
+      usarDadosJSON(data);
     })
     .catch(error => {
       console.error("Erro no carregamento do JSON:", error);
     });
+</script>
+
+<script>
+  // Armazena os dados carregados em uma variável global para uso posterior
+  function usarDadosJSON(data) {
+    window.tabelaParams = data;
+  }
 </script>
 
   <!-- ======== FIM JSON ======== -->
